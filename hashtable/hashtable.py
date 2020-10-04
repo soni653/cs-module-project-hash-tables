@@ -11,6 +11,9 @@ class HashTableEntry:
 # Hash table can't have fewer than this many slots
 MIN_CAPACITY = 8
 
+MAX_LOAD_FACTOR = 0.7
+
+MIN_LOAD_FACTOR = 0.2
 
 class HashTable:
     """
@@ -23,6 +26,7 @@ class HashTable:
     def __init__(self, capacity=MIN_CAPACITY):
         self.capacity = capacity
         self.array = [None] * capacity
+        self.number_of_items = 0
 
 
     def get_num_slots(self):
@@ -45,6 +49,7 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        return self.number_of_items / self.capacity
 
 
     def fnv1(self, key):
@@ -86,6 +91,7 @@ class HashTable:
         #return self.fnv1(key) % self.capacity
         return self.djb2(key) % self.capacity
 
+
     def put(self, key, value):
         """
         Store the value with the given key.
@@ -96,9 +102,28 @@ class HashTable:
         """
         # Ignores Collisions (will overwrite any existing values at the calculated index)
         index = self.hash_index(key)
-        if self.array[index] is not None:
-            print(f"Collision Warning: overwriting value: '{self.array[index]}', with value: '{value}'")
-        self.array[index] = value
+ #Day1  # if self.array[index] is not None:
+        #     print(f"Collision Warning: overwriting value: '{self.array[index]}', with value: '{value}'")
+ #Day1  # self.array[index] = value
+        entry = self.array[index]
+
+        if entry is None:
+            self.array[index] = HashTableEntry(key, value)
+            self.number_of_items += 1
+            self.resize_if_needed()
+            return
+
+        while entry.next != None and entry.key != key:
+            entry = entry.next
+
+        if entry.key == key:
+           entry.value = value
+        else:
+            entry.next = HashTableEntry(key, value)
+            self.number_of_items += 1
+            self.resize_if_needed()
+
+
 
 
 
@@ -112,7 +137,27 @@ class HashTable:
         Implement this.
         """
         index = self.hash_index(key)
-        self.array[index] = None
+#Day1  #self.array[index] = None
+        entry = self.array[index]
+        prev_entry = None
+
+        if entry is not None:
+            while entry.next != None and entry.key != key:
+                prev_entry = entry
+                entry = entry.next
+
+            if entry.key == key:
+                if prev_entry is None:
+                    self.array[index] = entry.next
+                else:
+                    prev_entry.next = entry.next
+                self.number_of_items -= 1
+                self.resize_if_needed()
+                return
+
+        print(f"Warning: Tried to delete a value from HashTable but no value exists for key: '{key}'")
+
+
 
 
     def get(self, key):
@@ -124,7 +169,23 @@ class HashTable:
         Implement this.
         """
         index = self.hash_index(key)
-        return self.array[index]
+#Day1  #return self.array[index]
+        entry = self.array[index]
+
+        if entry is None:
+            return None
+
+        while entry.next != None and entry.key != key:
+            entry = entry.next
+
+        return entry.value if entry.key == key else None
+
+
+    def resize_if_needed(self):
+        if self.get_load_factor() > MAX_LOAD_FACTOR:
+            self.resize(self.capacity * 2)
+        elif self.get_load_factor() < MIN_LOAD_FACTOR and int(self.capacity / 2) >= MIN_CAPACITY:
+            self.resize(int(self.capacity / 2))
 
 
     def resize(self, new_capacity):
@@ -135,6 +196,28 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        old_array = self.array
+        self.array = [None] * new_capacity
+        self.capacity = new_capacity
+
+        for old_entry in old_array:
+            while old_entry is not None:
+                key = old_entry.key
+                value = old_entry.value
+                index = self.hash_index(key)
+                entry = self.array[index]
+
+                # insert old key/value into resized hash table
+                if entry is None:
+                    self.array[index] = HashTableEntry(key, value)
+                else:
+                    while entry.next != None:
+                        entry = entry.next
+                    entry.next = HashTableEntry(key, value)
+
+                old_entry = old_entry.next
+
+
 
 
 

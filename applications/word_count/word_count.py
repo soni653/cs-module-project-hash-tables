@@ -1,7 +1,7 @@
 def word_count(s):
     # Your code here
     dict = {}
-    special_chars = ['"', ':', ';', ',', '.', '-', '+', '=', '/', '\\', '|', '[', ']', '{', '}', '(', ')', '*', '^', '&']
+    special_chars = '" : ; , . - + = / \ | [ ] { } ( ) * ^ &'.split()
     s2 = ''.join(c.lower() for c in s if not c in special_chars)
 
     for word in s2.split():
